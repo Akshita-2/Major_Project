@@ -1,0 +1,28 @@
+# --- Core Framework ---
+streamlit
+
+# --- AI & Natural Language Processing ---
+google-generativeai
+textblob
+wordcloud
+
+# --- File Processing & Generation ---
+PyPDF2
+python-docx
+SpeechRecognition
+pydub
+reportlab
+Pillow
+
+# --- Data Visualization ---
+plotly
+matplotlib
+
+# --- Security & Authentication ---
+bcrypt
+
+# --- Optional for Video Processing ---
+# opencv-python-headless
+
+#--audio--
+PyAudio

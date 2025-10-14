@@ -1,0 +1,21 @@
+# This configuration file defines the look and feel for Hiredly.
+
+# 🎨 Theme Customization
+# A modern, professional color palette.
+[theme]
+primaryColor = "#1E90FF"          # A professional dodger blue for accents and buttons.
+backgroundColor = "#F0F4F8"        # A very light, soft blue-grey for the main background.
+secondaryBackgroundColor = "#FFFFFF"  # A clean white background for the sidebar.
+textColor = "#262730"              # A dark slate grey for readable text.
+font = "sans serif"                # Use a standard, clean sans-serif font.
+
+# ⚙️ Server Configuration
+[server]
+port = 8501                        # The default port for Streamlit.
+headless = true                    # Important for deployment environments.
+runOnSave = true                   # Automatically re-run the script when you save a file.
+maxUploadSize = 500                # Increase max file size to 500MB to accommodate video resumes.
+
+# 🌐 Browser Settings
+[browser]
+gatherUsageStats = false           # Disables the collection of Streamlit usage statistics.
