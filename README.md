@@ -3,8 +3,6 @@
 Streamline your job application process with an AI-powered suite that analyzes, optimizes, and prepares you for your next big opportunity. Built with Streamlit and powered by Google's Gemini AI.
 
 
-*(Suggestion: Add a GIF here showing the workflow: uploading a resume, running the analysis, and exploring the instant results on different pages.)*
-
 ---
 
 ## ✨ About The Project
