@@ -22,7 +22,7 @@ def initialize_session_state():
         genai.configure(api_key=api_key)
         
         # Store the initialized model in the session state for reuse
-        st.session_state.gemini_model = genai.GenerativeModel('gemini-2.5-pro')
+        st.session_state.gemini_model = genai.GenerativeModel('gemini-2.5-flash')
         st.toast("✅ Gemini AI Connected!", icon="🤖")
 
     except Exception as e:

@@ -13,6 +13,7 @@ SpeechRecognition
 pydub
 reportlab
 Pillow
+moviepy
 
 # --- Data Visualization ---
 plotly
@@ -21,8 +22,5 @@ matplotlib
 # --- Security & Authentication ---
 bcrypt
 
-# --- Optional for Video Processing ---
-# opencv-python-headless
-
-#--audio--
+# --- Audio Input ---
 PyAudio

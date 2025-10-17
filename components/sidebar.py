@@ -1,55 +1,74 @@
 import streamlit as st
-from agents.resume_agent import ResumeAgent
+from agents import ResumeAgent
 
 def create_sidebar():
     """
-    Renders the sidebar component for the application.
+    Renders the sidebar component for the Hiredly application.
 
-    This function creates the job description text area and the AI agent 
-    interaction section, managing their state through Streamlit's session state.
+    This new sidebar displays the latest analysis score and hosts the
+    interactive AI Co-Pilot for ad-hoc tasks.
     """
 
-    # --- Job Description Input ---
+    # --- Display Latest Analysis Score ---
     st.sidebar.markdown("---")
-    st.sidebar.header("🎯 Job Description")
-    st.sidebar.info("Paste the job description for the role you're targeting. The AI will use this for all analyses.")
+    st.sidebar.header("📊 Latest Analysis")
 
-    # The text_area's value is tied to the session state to persist across pages
-    job_desc = st.sidebar.text_area(
-        "Paste the job description here:",
-        value=st.session_state.get('job_description', ''),
-        height=250,
-        key="job_desc_input" # A unique key is good practice
-    )
-    
-    # Update the session state whenever the text_area changes
-    st.session_state.job_description = job_desc
-
-    # --- AI Agent Assistant ---
-    st.sidebar.markdown("---")
-    st.sidebar.header("🤖 AI Assistant")
-    
-    # Display a warning if prerequisites are not met
-    if not st.session_state.get('resume_data') or not st.session_state.get('job_description'):
-        st.sidebar.warning("Please input your resume and a job description to activate the AI Assistant.")
+    if 'ats_score' in st.session_state and st.session_state.ats_score > 0:
+        score = st.session_state.ats_score
+        st.sidebar.metric("ATS Compatibility Score", f"{score:.1f}%")
+        
+        # Display the number of missing keywords if available
+        if 'ats_analysis_results' in st.session_state:
+            results = st.session_state.ats_analysis_results
+            if isinstance(results, dict):
+                missing_keywords_count = len(results.get('missing_critical_keywords', []))
+                st.sidebar.metric("Keywords to Add", missing_keywords_count)
     else:
-        st.sidebar.success("AI Assistant is ready! Ask a question below.")
+        st.sidebar.info("Your analysis results will appear here once you run a scan on the Dashboard.")
+
+    # --- Interactive AI Co-Pilot ---
+    st.sidebar.markdown("---")
+    st.sidebar.header("🤖 AI Co-Pilot")
+
+    # The assistant is only active if there's resume data to work with
+    if not st.session_state.get('resume_data'):
+        st.sidebar.warning("Please input your resume on the Dashboard to activate the Co-Pilot.")
+    else:
+        st.sidebar.success("Co-Pilot is ready! Ask for a specific task.")
         user_question = st.sidebar.text_input(
             "Ask the AI to help you:",
-            placeholder="e.g., 'Improve my summary'"
+            placeholder="e.g., 'Rephrase my summary to be more impactful.'"
         )
 
-        if st.sidebar.button("⚡ Ask AI Assistant"):
+        if st.sidebar.button("⚡ Ask Co-Pilot"):
             if user_question:
                 agent = ResumeAgent()
-                with st.sidebar.spinner("Agent is on it..."):
+                with st.sidebar.spinner("Co-Pilot is working..."):
+                    # The agent's execute_task is designed for these ad-hoc requests
                     response = agent.execute_task(
                         task_description=user_question,
                         resume_data=st.session_state.resume_data,
-                        job_description=st.session_state.job_description
+                        job_description=st.session_state.get('job_description', '')
                     )
-                    st.sidebar.info(f"**Agent Response:** {response}")
-                    # Use st.rerun() if the agent's action should immediately refresh the main page content
-                    st.rerun()
+
+                    # The UI now intelligently handles the agent's response
+                    if isinstance(response, dict) and 'error' not in response:
+                        # If the agent returns optimization data, apply it directly
+                        if 'optimized_summary' in response:
+                            st.session_state.resume_data['summary'] = response['optimized_summary']
+                        
+                        if 'missing_keywords' in response:
+                            current_skills = set(st.session_state.resume_data.get('skills', []))
+                            current_skills.update(response['missing_keywords'])
+                            st.session_state.resume_data['skills'] = sorted(list(current_skills))
+
+                        st.sidebar.success("Your resume data has been updated!")
+                        st.rerun() # Refresh the app to show changes instantly
+                        
+                    elif isinstance(response, dict) and 'error' in response:
+                        st.sidebar.error(response['error'])
+                    else:
+                        # If the agent returns a simple string message, just display it
+                        st.sidebar.info(response)
             else:
-                st.sidebar.error("Please enter a question for the assistant.")
+                st.sidebar.error("Please enter a task for the Co-Pilot.")

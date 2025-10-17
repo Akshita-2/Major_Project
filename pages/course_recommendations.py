@@ -1,116 +1,101 @@
-import streamlit as st
-from services.ai_services import GeminiAIHelper
-import plotly.graph_objects as go
+# pages/3_🎓_Course_Recommendations.py
 
-def display_skills_gap_chart(resume_skills, required_skills):
+import streamlit as st
+import plotly.graph_objects as go
+from components.sidebar import create_sidebar
+from components.ui_utils import apply_hiredly_styles
+
+def display_skills_gap_chart(user_skills, missing_skills):
     """
-    Creates and displays a radar chart visualizing the skills gap.
-    Note: This is a simplified visualization. A real implementation would need
-    a more sophisticated scoring of skill proficiency.
+    Creates a dynamic radar chart visualizing the actual skills gap.
     """
-    # For demonstration, we'll find common and missing skills
-    resume_skills_lower = [s.lower() for s in resume_skills]
+    user_skills_lower = {s.lower() for s in user_skills}
+    missing_skills_lower = {s.lower() for s in missing_skills}
     
-    # Let's assume some required skills for visualization purposes
-    # A more advanced version would extract this from the job description
-    demo_required = ['python', 'data analysis', 'machine learning', 'communication', 'project management', 'sql', 'tableau']
+    # The axes of our chart are the union of skills you have and skills you're missing.
+    labels = sorted(list(user_skills_lower.union(missing_skills_lower)))
     
-    labels = list(set(resume_skills_lower + demo_required))
-    
-    # Assign scores: 1 if present, 0.2 if missing (to create shape)
-    user_scores = [1 if skill in resume_skills_lower else 0.2 for skill in labels]
-    required_scores = [1 if skill in demo_required else 0.2 for skill in labels]
-    
+    # A required skill is one you have OR one that's missing.
+    required_skills_lower = user_skills_lower.union(missing_skills_lower)
+
+    # Assign scores: 1 if present, 0.2 if missing (to create a visible shape).
+    user_scores = [1 if skill in user_skills_lower else 0.2 for skill in labels]
+    required_scores = [1 if skill in required_skills_lower else 0.2 for skill in labels]
+
     fig = go.Figure()
 
+    # Your Skills (Blue Area)
     fig.add_trace(go.Scatterpolar(
-        r=user_scores,
-        theta=labels,
-        fill='toself',
-        name='Your Skills'
+        r=user_scores, theta=labels, fill='toself', name='Your Skills',
+        line=dict(color='#1E90FF')
     ))
+    # Required Skills (Red Line Outline)
     fig.add_trace(go.Scatterpolar(
-        r=required_scores,
-        theta=labels,
-        fill='toself',
-        name='Required Skills'
+        r=required_scores, theta=labels, fill='none', name='Required Skills',
+        line=dict(color='rgba(255, 100, 100, 0.8)')
     ))
 
     fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=False,
-                range=[0, 1.1]
-            )),
+        polar=dict(radialaxis=dict(visible=False, range=[0, 1.1])),
         showlegend=True,
-        title="Skills Gap Analysis"
+        title="Your Personalized Skills Gap",
+        font=dict(color="#262730")
     )
-
     st.plotly_chart(fig, use_container_width=True)
 
-def page_course_recommendations():
-    """Defines the UI and logic for the Course Recommendations page."""
-    st.header("🎓 AI-Powered Skill Development")
-    st.markdown("Bridge your skill gaps with personalized course recommendations from Gemini.")
 
-    # --- Authentication and Prerequisite Checks ---
+def page_course_recommendations():
+    """Defines the UI for the Course Recommendations results page."""
+    st.header("🎓 AI-Powered Skill Development")
+    st.markdown("Here are personalized recommendations to bridge your skill gaps and get you job-ready.")
+    
+    apply_hiredly_styles()
+
     if not st.session_state.get('logged_in', False):
-        st.warning("Please log in from the main page to access this feature.")
+        st.warning("Please log in to access Hiredly's tools.")
         st.stop()
 
-    if not st.session_state.get('resume_data') or not st.session_state.get('job_description'):
-        st.info("👈 Please input your resume and a job description to get personalized recommendations.")
-        return
-
+    create_sidebar()
     st.markdown("---")
 
-    col1, col2 = st.columns([1, 1])
+    # --- Display Pre-Computed Results ---
+    if 'course_recommendations' in st.session_state and st.session_state.get('course_recommendations'):
+        courses = st.session_state.course_recommendations
+        ats_results = st.session_state.get('ats_analysis_results', {})
+        resume_data = st.session_state.get('resume_data', {})
+        missing_keywords = ats_results.get('missing_critical_keywords', [])
+        
+        col1, col2 = st.columns([3, 2])
 
-    with col1:
-        st.subheader("📈 Your Skills Gap")
-        resume_skills = st.session_state.resume_data.get('skills', [])
-        # In a real app, you would extract required skills from the job description
-        required_skills_placeholder = [] 
-        display_skills_gap_chart(resume_skills, required_skills_placeholder)
+        with col1:
+            st.subheader("📈 Your Skills Gap Analysis")
+            display_skills_gap_chart(resume_data.get('skills', []), missing_keywords)
 
-    with col2:
-        st.subheader("🎯 Priority Learning Areas")
-        st.markdown("Based on your skills gap, the AI recommends focusing on:")
-        # This part could also be generated by the AI in a more advanced version
-        st.info("🔴 **High Priority:** Machine Learning Concepts")
-        st.warning("🟡 **Medium Priority:** Advanced SQL for Data Science")
-        st.success("🟢 **Low Priority:** Presentation and Communication Skills")
-
-    st.markdown("---")
-
-    # --- AI Recommendation Trigger ---
-    if st.button("🤖 Generate AI Course Recommendations", type="primary"):
-        with st.spinner("🧠 Gemini is analyzing your skill gap and finding the best courses..."):
-            ai_helper = GeminiAIHelper(st.session_state.gemini_model)
-            skills = st.session_state.resume_data.get('skills', [])
-            courses = ai_helper.generate_course_recommendations(skills, st.session_state.job_description)
-            st.session_state.course_recommendations = courses
-
-    # --- Display Recommendations ---
-    if 'course_recommendations' in st.session_state and st.session_state.course_recommendations:
+        with col2:
+            st.subheader("🎯 Priority Learning Areas")
+            if missing_keywords:
+                st.markdown("Based on your analysis, the AI recommends focusing on:")
+                # Dynamically list the top missing keywords
+                for i, keyword in enumerate(missing_keywords[:4]):
+                    st.info(f"**Priority {i+1}:** {keyword.title()}")
+            else:
+                st.success("Excellent! No critical skill gaps were identified.")
+        
+        st.markdown("---")
         st.subheader("📚 Your Personalized Learning Plan")
         
-        courses = st.session_state.course_recommendations
-        for i, course in enumerate(courses, 1):
-            with st.expander(f"**{course.get('course_name', 'Unnamed Course')}** by {course.get('provider', 'N/A')}"):
-                st.markdown(f"**Why it's recommended:** {course.get('reason', 'N/A')}")
-                st.markdown(f"**Skill Gap Addressed:** `{course.get('skill_gap', 'General Skill')}`")
-                st.markdown(f"**Estimated Duration:** {course.get('duration', 'Variable')}")
+        for i, course in enumerate(courses):
+             if isinstance(course, dict):
+                with st.expander(f"**{course.get('course_name', 'Unnamed Course')}** by {course.get('provider', 'N/A')}"):
+                    st.markdown(f"**Why it's recommended:** {course.get('reason', 'N/A')}")
+                    st.markdown(f"**Skill Gap Addressed:** `{course.get('skill_gap', 'General Skill')}`")
+                    st.markdown(f"**Estimated Duration:** {course.get('duration', 'Variable')}")
+                    st.button("🔗 View Course", key=f"course_btn_{i}") # Placeholder button
 
-                btn_col1, btn_col2 = st.columns(2)
-                with btn_col1:
-                    # In a real app, this button would link to the course page
-                    st.button(f"🔗 View Course Details", key=f"view_course_{i}")
-                with btn_col2:
-                    st.button(f"⭐ Add to My Learning Plan", key=f"add_plan_{i}")
     else:
-        st.info("Click the button above to generate your learning plan.")
+        # Guide the user back to the dashboard if no results are found
+        st.info("Your personalized course recommendations will appear here.")
+        st.warning("👈 Please provide your resume and a job description on the **Dashboard** and click 'Analyze & Prepare' first.")
 
-# --- Run the page ---
 if __name__ == "__main__":
     page_course_recommendations()

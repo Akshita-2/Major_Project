@@ -5,61 +5,46 @@ import matplotlib.pyplot as plt
 
 def display_ats_gauge(score):
     """
-    Renders a Plotly gauge chart to display the ATS score.
-
-    Args:
-        score (int or float): The ATS score to display (0-100).
+    Renders a Plotly gauge chart styled for the Hiredly theme.
     """
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=score,
         domain={'x': [0, 1], 'y': [0, 1]},
-        title={'text': "ATS Compatibility Score", 'font': {'size': 20}},
+        title={'text': "ATS Compatibility Score", 'font': {'size': 20, 'color': '#262730'}},
         gauge={
             'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
-            'bar': {'color': "#2E86C1"},
+            'bar': {'color': "#1E90FF"},  # UPDATED: Hiredly primary color
             'bgcolor': "white",
-            'borderwidth': 2,
-            'bordercolor': "gray",
+            'borderwidth': 1,
+            'bordercolor': "#e6e6e6",
             'steps': [
                 {'range': [0, 50], 'color': '#FADBD8'},
                 {'range': [50, 80], 'color': '#FDEBD0'},
                 {'range': [80, 100], 'color': '#D5F5E3'}
             ],
-            'threshold': {
-                'line': {'color': "red", 'width': 4},
-                'thickness': 0.75,
-                'value': 95
-            }
         }
     ))
-    fig.update_layout(height=250, margin=dict(l=20, r=20, t=40, b=20))
+    fig.update_layout(height=250, margin=dict(l=20, r=20, t=50, b=20), font=dict(color="#262730"))
     st.plotly_chart(fig, use_container_width=True)
 
 def display_keyword_wordcloud(keywords):
     """
     Generates and displays a word cloud from a list of keywords.
-
-    Args:
-        keywords (list): A list of strings (keywords).
     """
     if not keywords:
         st.info("No missing keywords to display.")
         return
 
-    # Join the keywords into a single string
     text = " ".join(keywords)
-
     try:
         wordcloud = WordCloud(
             width=800,
             height=400,
             background_color='white',
-            colormap='viridis',
+            colormap='Blues_r',  # UPDATED: Blue colormap to match theme
             max_words=50,
-            contour_width=3,
-            contour_color='steelblue',
-            collocations=False # Avoids grouping common word pairs
+            collocations=False
         ).generate(text)
 
         fig, ax = plt.subplots(figsize=(10, 5))
@@ -69,54 +54,46 @@ def display_keyword_wordcloud(keywords):
     except Exception as e:
         st.error(f"Could not generate word cloud: {e}")
 
-def display_skills_gap_chart(user_skills, required_skills):
+def display_skills_gap_chart(user_skills, missing_skills):
     """
-    Creates and displays a radar chart visualizing the skills gap.
-    This is a simplified visualization for demonstration.
-
-    Args:
-        user_skills (list): A list of skills from the user's resume.
-        required_skills (list): A list of skills from the job description.
+    Creates and displays a dynamic radar chart visualizing the actual skills gap.
     """
     user_skills_lower = {s.lower() for s in user_skills}
-    # For demo, if required_skills is empty, use a default set.
-    if not required_skills:
-        required_skills = ['python', 'data analysis', 'machine learning', 'communication', 'project management', 'sql']
-    required_skills_lower = {s.lower() for s in required_skills}
+    missing_skills_lower = {s.lower() for s in missing_skills}
     
-    # Combine all unique skills to form the axes of the radar chart
-    labels = list(user_skills_lower.union(required_skills_lower))
+    # The axes of our chart are the union of skills you have and skills you're missing.
+    labels = sorted(list(user_skills_lower.union(missing_skills_lower)))
     
-    # Assign scores: 1 if the skill is present, 0.2 if missing (to create a visible shape)
+    if not labels:
+        st.info("Not enough skill data to generate a gap analysis chart.")
+        return
+        
+    # A required skill is one you have OR one that's missing.
+    required_skills_lower = user_skills_lower.union(missing_skills_lower)
+
+    # Assign scores: 1 if present, 0.2 if missing (to create a visible shape).
     user_scores = [1 if skill in user_skills_lower else 0.2 for skill in labels]
     required_scores = [1 if skill in required_skills_lower else 0.2 for skill in labels]
 
     fig = go.Figure()
 
-    # User's skills trace
+    # Required Skills (Red Area - the gap to fill)
     fig.add_trace(go.Scatterpolar(
-        r=user_scores,
-        theta=labels,
-        fill='toself',
-        name='Your Skills',
-        line=dict(color='royalblue')
+        r=required_scores, theta=labels, fill='toself', name='Required Skills',
+        fillcolor='rgba(231, 76, 60, 0.2)',
+        line=dict(color='rgba(231, 76, 60, 0.8)')
+    ))
+    # Your Skills (Blue Area)
+    fig.add_trace(go.Scatterpolar(
+        r=user_scores, theta=labels, fill='toself', name='Your Skills',
+        fillcolor='rgba(30, 144, 255, 0.4)',      # UPDATED: Hiredly primary color (semi-transparent)
+        line=dict(color='#1E90FF')                # UPDATED: Hiredly primary color
     ))
     
-    # Required skills trace
-    fig.add_trace(go.Scatterpolar(
-        r=required_scores,
-        theta=labels,
-        fill='toself',
-        name='Required Skills',
-        line=dict(color='rgba(255, 100, 100, 0.8)') # A semi-transparent red
-    ))
-
     fig.update_layout(
-        polar=dict(
-            radialaxis=dict(visible=False, range=[0, 1.1])
-        ),
+        polar=dict(radialaxis=dict(visible=False, range=[0, 1.1])),
         showlegend=True,
-        title="Skills Gap Analysis"
+        title="Your Personalized Skills Gap",
+        font=dict(color="#262730")
     )
-
     st.plotly_chart(fig, use_container_width=True)
