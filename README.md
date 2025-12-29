@@ -7,11 +7,9 @@ Streamline your job application process with an AI-powered suite that analyzes, 
 
 ## ✨ About The Project
 
-Hiredly is a smart, fast, and beautiful web application designed to give job seekers a competitive edge. It moves beyond simple keyword matching by leveraging a powerful AI agent to perform a comprehensive, one-click analysis of your resume against a target job description.
+Hiredly is a modern, intelligent web application built to give job seekers a meaningful competitive advantage. It goes beyond traditional keyword-based matching by utilizing an advanced AI agent to perform a comprehensive, one-click analysis of a resume against a specific job description.
 
-The "analyze-once, explore-instantly" architecture ensures a seamless user experience. After a single processing step, all insights—from ATS compatibility to personalized interview questions—are available instantly across the app.
-
----
+Powered by an “analyze once, explore instantly” architecture, Hiredly delivers a smooth and efficient user experience. With a single processing step, users gain immediate access to a full suite of insights—ranging from ATS compatibility assessments to tailored interview questions—available instantly throughout the application.
 
 ## 🛠️ Key Features
 
