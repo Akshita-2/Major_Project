@@ -1,4 +1,4 @@
-# 🚀 Hiredly - Your AI Career Co-Pilot
+# 🚀 Hiredly - Your AI Career Co-Pilot and Career Assistance.
 
 Streamline your job application process with an AI-powered suite that analyzes, optimizes, and prepares you for your next big opportunity. Built with Streamlit and powered by Google's Gemini AI.
 
